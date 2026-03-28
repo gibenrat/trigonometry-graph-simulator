@@ -1,1 +1,740 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>단위원과 삼각함수 그래프 체험</title>
+<style>
+:root {
+  --bg:     #faf9f6;
+  --bg2:    #f1efe8;
+  --bg3:    #e8e6df;
+  --line:   #d0cec7;
+  --text:   #2c2c2a;
+  --text2:  #5f5e5a;
+  --text3:  #9c9a92;
+  --amber:  #b07010;
+  --sin:    #d63a39;
+  --cos:    #1455a0;
+  --tan:    #276008;
+  --purple: #8833bb;
+  --r: 9px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html,body { background: var(--bg); color: var(--text); font-family: 'Malgun Gothic','Apple SD Gothic Neo',sans-serif; }
 
+header {
+  background: var(--bg2); border-bottom: 1px solid var(--line);
+  padding: 11px 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;
+}
+header h1 { font-size: 16px; font-weight: 700; }
+header p  { font-size: 12px; color: var(--text2); margin-top: 2px; }
+.print-btn {
+  padding: 6px 13px; border-radius: 7px; border: 1px solid var(--line);
+  background: transparent; font-size: 12px; cursor: pointer; color: var(--text2); font-family: inherit;
+}
+.print-btn:hover { background: var(--bg3); }
+
+main { padding: 12px 14px; max-width: 1080px; margin: 0 auto; }
+
+/* 탭 */
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.tab {
+  padding: 7px 15px; border-radius: 22px; border: 1.5px solid var(--line);
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  background: var(--bg2); color: var(--text2); font-family: inherit;
+  transition: all .15s; touch-action: manipulation;
+}
+.tab.on { color: #fff; border-color: transparent; }
+.tab.on.s  { background: var(--sin); }
+.tab.on.c  { background: var(--cos); }
+.tab.on.sc { background: var(--purple); }
+.tab.on.t  { background: var(--tan); }
+.tab.on.a  { background: #333; }
+
+/* 캔버스 */
+#cv { display: block; width: 100%; background: var(--bg); border-radius: var(--r); }
+
+/* 컨트롤 */
+.ctrl {
+  margin-top: 10px; background: var(--bg2);
+  border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px;
+}
+.ctrl-row { display: flex; align-items: center; gap: 8px; }
+.lbl { font-size: 13px; color: var(--text2); white-space: nowrap; }
+.aval { font-size: 13px; font-weight: 700; min-width: 185px; color: var(--text); }
+input[type=range] { flex: 1; accent-color: var(--amber); cursor: pointer; }
+.play {
+  padding: 8px 16px; border-radius: 8px; border: 1.5px solid var(--line);
+  background: var(--bg3); font-size: 13px; font-weight: 700; cursor: pointer;
+  color: var(--text); font-family: inherit; white-space: nowrap; touch-action: manipulation;
+}
+.speed-row { display: flex; align-items: center; gap: 5px; margin-top: 9px; }
+.sp {
+  padding: 4px 11px; border-radius: 6px; border: 1px solid var(--line);
+  background: transparent; font-size: 12px; cursor: pointer;
+  color: var(--text2); font-family: inherit; touch-action: manipulation;
+}
+.sp.on { background: var(--text); color: var(--bg); }
+
+/* 값 카드 */
+.cards { display: flex; gap: 7px; margin-top: 9px; flex-wrap: wrap; }
+.card {
+  flex: 1; min-width: 88px; padding: 9px 12px;
+  border-radius: var(--r); border: 1px solid var(--line);
+  background: var(--bg2); font-size: 12px; color: var(--text2);
+}
+.card b { display: block; font-size: 15px; font-weight: 700; margin-top: 3px; }
+
+/* 설명 */
+.desc {
+  margin-top: 12px; background: var(--bg2);
+  border: 1px solid var(--line); border-radius: var(--r); padding: 13px 15px;
+}
+.desc h2 { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+.dgrid { display: grid; grid-template-columns: repeat(auto-fit,minmax(210px,1fr)); gap: 10px; }
+.di { font-size: 13px; line-height: 1.65; color: var(--text2); }
+.di strong { font-weight: 700; color: var(--text); }
+.badge {
+  display: inline-block; padding: 1px 7px; border-radius: 4px;
+  font-size: 12px; font-weight: 700; margin-right: 3px;
+}
+.bs { background: rgba(214,58,57,.12); color: var(--sin); }
+.bc { background: rgba(20,85,160,.12); color: var(--cos); }
+.bt { background: rgba(39,96,8,.12);   color: var(--tan); }
+
+/* 정리표 */
+.tbl-wrap {
+  margin-top: 12px; background: var(--bg2);
+  border: 1px solid var(--line); border-radius: var(--r); padding: 13px 15px; overflow-x: auto;
+}
+.tbl-wrap h2 { font-size: 14px; font-weight: 700; margin-bottom: 9px; }
+table { width: 100%; border-collapse: collapse; min-width: 500px; font-size: 13px; }
+th { background: var(--bg3); padding: 7px 10px; text-align: center; font-weight: 700; border: 1px solid var(--line); color: var(--text2); font-size: 12px; }
+td { padding: 6px 10px; text-align: center; border: 1px solid var(--line); }
+tr:hover td { background: var(--bg3); }
+.r  { color: var(--amber); font-weight: 700; }
+.vs { color: var(--sin);   font-weight: 600; }
+.vc { color: var(--cos);   font-weight: 600; }
+.vt { color: var(--tan);   font-weight: 600; }
+.nd { color: var(--text3); font-style: italic; }
+
+@media print {
+  header .print-btn,.tabs,.ctrl,.cards { display:none!important; }
+  #cv { border:1px solid #ccc; }
+  .desc,.tbl-wrap { break-inside:avoid; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>단위원과 삼각함수 그래프 체험</h1><p>슬라이더로 각도 θ를 조절하며 그래프가 그려지는 과정을 확인하세요</p></div>
+  <button class="print-btn" onclick="window.print()">🖨 인쇄 / PDF 저장</button>
+</header>
+
+<main>
+  <div class="tabs">
+    <button class="tab on s" data-f="sin"    onclick="setF(this)">sin θ</button>
+    <button class="tab c"    data-f="cos"    onclick="setF(this)">cos θ</button>
+    <button class="tab sc"   data-f="sincos" onclick="setF(this)">sin 과 cos</button>
+    <button class="tab t"    data-f="tan"    onclick="setF(this)">tan θ</button>
+    <button class="tab a"    data-f="all"    onclick="setF(this)">모두 보기</button>
+  </div>
+
+  <canvas id="cv"></canvas>
+
+  <div class="ctrl">
+    <div class="ctrl-row">
+      <span class="lbl">θ =</span>
+      <input type="range" id="sl" min="0" max="2000" value="570" oninput="onSl(this.value)">
+      <span class="aval" id="adsp"></span>
+      <button class="play" id="pb" onclick="togglePlay()">▶ 재생</button>
+    </div>
+    <div class="speed-row">
+      <span class="lbl" style="font-size:12px">속도:</span>
+      <button class="sp on" onclick="setSp(0.4,this)">느리게</button>
+      <button class="sp"    onclick="setSp(0.9,this)">보통</button>
+      <button class="sp"    onclick="setSp(2.0,this)">빠르게</button>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card">sin θ<b id="sv" style="color:var(--sin)">—</b></div>
+    <div class="card">cos θ<b id="cv2" style="color:var(--cos)">—</b></div>
+    <div class="card">tan θ<b id="tv" style="color:var(--tan)">—</b></div>
+    <div class="card">sin²θ+cos²θ<b id="pv">—</b></div>
+  </div>
+
+  <div class="desc">
+    <h2>📐 읽는 방법</h2>
+    <div class="dgrid">
+      <div class="di"><span class="badge bs">sin θ</span><strong>빨간선</strong><br>단위원 위 점 P의 <strong>y좌표</strong>입니다. P에서 x축에 내린 수선의 발까지의 거리로, θ가 커질수록 그래프 오른쪽에 이어서 그려집니다.</div>
+      <div class="di"><span class="badge bc">cos θ</span><strong>파란선</strong><br>단위원 위 점 P의 <strong>x좌표</strong>입니다. θ=0일 때 최댓값 1, θ=π일 때 최솟값 −1이며 sin보다 π/2 앞서 진행합니다.</div>
+      <div class="di"><span class="badge bt">tan θ</span><strong>초록선</strong><br>단위원 오른쪽 접선 위 점의 높이입니다. θ=π/2, 3π/2에서 <strong>정의되지 않아</strong> 그래프가 끊깁니다.</div>
+      <div class="di"><strong>⭕ 점 P의 좌표</strong> = (cos θ, sin θ)<br>항상 <strong>sin²θ+cos²θ=1</strong> 성립.<br>30도 간격 특수각에 도달하면 좌표가 강조 표시됩니다.</div>
+    </div>
+  </div>
+
+  <div class="tbl-wrap">
+    <h2>📋 특수각 값 정리표</h2>
+    <table><thead><tr><th>각도(°)</th><th>라디안</th><th>sin θ</th><th>cos θ</th><th>tan θ</th></tr></thead>
+    <tbody id="tb"></tbody></table>
+  </div>
+</main>
+
+<script>
+/* ════════════════════════════════════════
+   상수 & 상태
+════════════════════════════════════════ */
+const PI = Math.PI;
+const T_MIN = -PI, T_MAX = 5*PI/2;
+const SPAN  = T_MAX - T_MIN;
+
+const CV  = document.getElementById('cv');
+const CTX = CV.getContext('2d');
+
+let W = 0, H = 0;
+let theta  = T_MIN + (570/2000)*SPAN;
+let func   = 'sin';
+let playing= false, raf=null, t0=null, spd=0.4;
+
+/* ════════════════════════════════════════
+   색상
+════════════════════════════════════════ */
+const C = {
+  sin:'#d63a39', cos:'#1455a0', tan:'#276008',
+  amber:'#b07010', bg:'#faf9f6', bg2:'#f1efe8',
+  text:'#2c2c2a', text2:'#5f5e5a', text3:'#9c9a92',
+  line:'rgba(0,0,0,0.09)'
+};
+function funcs(){ return func==='all'?['sin','cos','tan']:func==='sincos'?['sin','cos']:[func]; }
+const FC = {sin:C.sin, cos:C.cos, tan:C.tan};
+
+/* ════════════════════════════════════════
+   특수각 (π/6 간격, 라디안 표기)
+════════════════════════════════════════ */
+const SPEC = [];
+const SLBL = {0:'0',1:'π/6',2:'π/3',3:'π/2',4:'2π/3',5:'5π/6',6:'π',
+              7:'7π/6',8:'4π/3',9:'3π/2',10:'5π/3',11:'11π/6',12:'2π',
+              13:'13π/6',14:'7π/3',15:'5π/2'};
+for(let k=-2;k<=15;k++){
+  const t=k*PI/6;
+  if(t<T_MIN-0.01||t>T_MAX+0.01)continue;
+  const ak=Math.abs(k);
+  const lbl = k===0?'0':(k<0?'-':'')+SLBL[ak];
+  if(lbl) SPEC.push({t,lbl,k});
+}
+
+/* 주어진 θ에서 가장 가까운 특수각 반환 (임계값 내) */
+function snap(t){
+  let best=null, bd=Infinity;
+  for(const s of SPEC){ const d=Math.abs(s.t-t); if(d<bd){bd=d;best=s;} }
+  return bd < 0.06 ? best : null;
+}
+
+/* 깔끔한 분수 표현 */
+function nice(v){
+  const a=Math.abs(v), sg=v<-0.001?'−':'';
+  if(a<0.0015)            return '0';
+  if(Math.abs(a-1)<0.003) return sg+'1';
+  if(Math.abs(a-.5)<0.003)return sg+'1/2';
+  if(Math.abs(a-Math.SQRT2/2)<0.003) return sg+'√2/2';
+  if(Math.abs(a-Math.sqrt(3)/2)<0.003) return sg+'√3/2';
+  if(Math.abs(a-Math.sqrt(3))<0.003)   return sg+'√3';
+  if(Math.abs(a-1/Math.sqrt(3))<0.003) return sg+'√3/3';
+  return v.toFixed(3);
+}
+
+/* ════════════════════════════════════════
+   캔버스 크기
+════════════════════════════════════════ */
+function resize(){
+  const pw = CV.parentElement.clientWidth || 700;
+  const ph = Math.max(430, Math.round(pw * 0.60));
+  CV.width  = pw;
+  CV.height = ph;
+  W = pw; H = ph;
+}
+resize();
+window.addEventListener('resize',()=>{ resize(); redraw(); });
+
+/* ════════════════════════════════════════
+   레이아웃 — 단위원 + 그래프가 같은 y스케일
+════════════════════════════════════════ */
+function lay(){
+  const mT=26, mB=34, mL=48, mR=12;
+  const gH = H - mT - mB;
+  /* y범위: ±3.2, unitPx = gH/(2*3.2) */
+  const unitPx = gH / 6.4;
+  const R      = unitPx;          /* 단위원 반지름 = 1단위 */
+  const midY   = mT + gH/2;
+  /* θ=0 의 x좌표 = 단위원 오른쪽 끝 */
+  const x0     = mL + 2*R + 8;
+  const cx     = x0 - R;         /* 단위원 중심 x */
+  const cy     = midY;
+  /* x→픽셀: pxR = unitPx (동일 스케일) */
+  const pxR    = unitPx;
+  const sx = t => x0 + t*pxR;
+  const sy = v => midY - v*unitPx;
+  return {mT,mB,mL,mR,gH,unitPx,R,midY,x0,cx,cy,pxR,sx,sy};
+}
+
+/* ════════════════════════════════════════
+   그리기 헬퍼
+════════════════════════════════════════ */
+function pill(x,y,w,h,col,strokeCol){
+  CTX.fillStyle=col;
+  CTX.fillRect(x,y,w,h);
+  if(strokeCol){ CTX.strokeStyle=strokeCol; CTX.lineWidth=1; CTX.strokeRect(x,y,w,h); }
+}
+
+/* 텍스트 배경박스 + 텍스트 */
+function labelBox(txt, x, y, col, bgAlpha){
+  CTX.font = 'bold 12px Malgun Gothic,sans-serif';
+  const tw = CTX.measureText(txt).width;
+  const bx = x - 3, by = y - 13, bw = tw + 6, bh = 16;
+  CTX.globalAlpha = bgAlpha;
+  CTX.fillStyle = C.bg;
+  CTX.fillRect(bx, by, bw, bh);
+  CTX.globalAlpha = 1;
+  CTX.fillStyle = col;
+  CTX.textAlign = 'left';
+  CTX.fillText(txt, x, y);
+}
+
+/* 좌표 말풍선 (cos파랑, sin빨강 색상 구분) */
+function coordBubble(cosStr, sinStr, bx, by){
+  CTX.font = 'bold 12px Malgun Gothic,sans-serif';
+  const parts = [
+    {t:'(',   col:C.text2},
+    {t:cosStr, col:C.cos},
+    {t:', ',   col:C.text2},
+    {t:sinStr, col:C.sin},
+    {t:')',    col:C.text2},
+  ];
+  let totalW = 0;
+  for(const p of parts) totalW += CTX.measureText(p.t).width;
+
+  /* 배경 */
+  CTX.globalAlpha = 0.96;
+  CTX.fillStyle   = C.bg;
+  CTX.fillRect(bx-4, by-14, totalW+8, 17);
+  CTX.globalAlpha = 1;
+  CTX.strokeStyle = C.amber;
+  CTX.lineWidth   = 1.2;
+  CTX.strokeRect(bx-4, by-14, totalW+8, 17);
+
+  /* 텍스트 */
+  let cx2 = bx;
+  for(const p of parts){
+    CTX.fillStyle = p.col;
+    CTX.textAlign = 'left';
+    CTX.fillText(p.t, cx2, by);
+    cx2 += CTX.measureText(p.t).width;
+  }
+}
+
+/* ════════════════════════════════════════
+   메인 그리기
+════════════════════════════════════════ */
+function redraw(){
+  CTX.clearRect(0,0,W,H);
+  const L = lay();
+  const {mT,mB,mL,mR,gH,unitPx,R,midY,x0,cx,cy,pxR,sx,sy} = L;
+
+  /* ── 그리드 ── */
+  CTX.save();
+  CTX.beginPath(); CTX.rect(mL, mT, W-mL-mR, gH+2); CTX.clip();
+  CTX.strokeStyle = C.line; CTX.lineWidth = 0.5;
+  for(let k=-2;k<=6;k++){
+    const px = sx(k*PI/2);
+    if(px<mL-1||px>W-mR+1) continue;
+    CTX.beginPath(); CTX.moveTo(px,mT); CTX.lineTo(px,H-mB); CTX.stroke();
+  }
+  [-3,-2,-1,-.5,.5,1,2,3].forEach(v=>{
+    const py=sy(v); if(py<mT||py>H-mB) return;
+    CTX.beginPath(); CTX.moveTo(mL,py); CTX.lineTo(W-mR,py); CTX.stroke();
+  });
+  CTX.restore();
+
+  /* ── 축 ── */
+  CTX.strokeStyle = C.text2; CTX.lineWidth = 1;
+  CTX.beginPath(); CTX.moveTo(mL,midY); CTX.lineTo(W-mR,midY); CTX.stroke();
+  CTX.beginPath(); CTX.moveTo(x0,mT);   CTX.lineTo(x0,H-mB);   CTX.stroke();
+
+  /* y레이블 */
+  CTX.fillStyle=C.text2; CTX.font='12px Malgun Gothic,sans-serif'; CTX.textAlign='right';
+  [-2,-1,1,2].forEach(v=>{
+    const py=sy(v); if(py<mT+4||py>H-mB-4) return;
+    CTX.fillText(v,mL-6,py+4);
+    CTX.strokeStyle=C.text2; CTX.lineWidth=0.5;
+    CTX.beginPath(); CTX.moveTo(mL-3,py); CTX.lineTo(mL+2,py); CTX.stroke();
+  });
+
+  /* x레이블 */
+  const XTICKS=[[-1,'-π'],[-1/2,'-π/2'],[0,'0'],[1/2,'π/2'],[1,'π'],[3/2,'3π/2'],[2,'2π'],[5/2,'5π/2']];
+  CTX.fillStyle=C.text2; CTX.font='12px Malgun Gothic,sans-serif'; CTX.textAlign='center';
+  XTICKS.forEach(([k,lbl])=>{
+    const px=sx(k*PI); if(px<mL+2||px>W-mR+2) return;
+    CTX.fillText(lbl,px,H-mB+15);
+    CTX.strokeStyle=C.text2; CTX.lineWidth=0.5;
+    CTX.beginPath(); CTX.moveTo(px,midY-4); CTX.lineTo(px,midY+4); CTX.stroke();
+  });
+
+  const fs = funcs();
+
+  /* ── 음수 구간 그래프 (T_MIN~0) 반투명, 단위원 위에 겹침 ── */
+  if(theta > T_MIN){
+    const tEnd = Math.min(theta, 0);
+    CTX.save();
+    CTX.beginPath(); CTX.rect(mL,mT,W-mL-mR,gH+2); CTX.clip();
+    CTX.globalAlpha = 0.55;
+    drawCurves(fs, T_MIN, tEnd, L);
+    CTX.globalAlpha = 1;
+    CTX.restore();
+  }
+
+  /* ── 단위원 ── */
+  drawCircle(L);
+
+  /* ── 양수 구간 그래프 (0~theta) ── */
+  if(theta > 0){
+    const tEnd = Math.min(theta, T_MAX);
+    CTX.save();
+    CTX.beginPath(); CTX.rect(x0-1,mT,W-x0-mR+2,gH+2); CTX.clip();
+    drawCurves(fs, 0, tEnd, L);
+    CTX.restore();
+  }
+
+  /* ── 현재 θ 수직선 ── */
+  const nx = sx(theta);
+  CTX.save();
+  CTX.beginPath(); CTX.rect(mL,mT,W-mL-mR,gH+4); CTX.clip();
+  CTX.setLineDash([5,4]); CTX.strokeStyle=C.amber; CTX.lineWidth=1.5;
+  CTX.beginPath(); CTX.moveTo(nx,mT); CTX.lineTo(nx,H-mB); CTX.stroke();
+  CTX.setLineDash([]);
+  CTX.restore();
+
+  /* ── 현재값 점 + 수평 안내선 ── */
+  const sp = snap(theta);
+  fs.forEach(fn=>{
+    let v;
+    if(fn==='sin')       v = Math.sin(theta);
+    else if(fn==='cos')  v = Math.cos(theta);
+    else { v = Math.tan(theta); if(!isFinite(v)||Math.abs(v)>3.1) return; }
+
+    const py = sy(v);
+    const col = FC[fn];
+
+    /* 수평 안내선 */
+    CTX.save();
+    CTX.beginPath(); CTX.rect(mL,mT,W-mL-mR,gH+2); CTX.clip();
+    CTX.setLineDash([4,4]); CTX.strokeStyle=col; CTX.lineWidth=1; CTX.globalAlpha=0.45;
+    CTX.beginPath(); CTX.moveTo(x0,py); CTX.lineTo(nx,py); CTX.stroke();
+    CTX.setLineDash([]); CTX.globalAlpha=1;
+    CTX.restore();
+
+    /* y축 마크 */
+    CTX.strokeStyle=col; CTX.lineWidth=2;
+    CTX.beginPath(); CTX.moveTo(mL-5,py); CTX.lineTo(mL+2,py); CTX.stroke();
+
+    /* y값 레이블 */
+    const vStr = sp ? nice(v) : v.toFixed(2);
+    CTX.font='bold 12px Malgun Gothic,sans-serif'; CTX.fillStyle=col; CTX.textAlign='right';
+    CTX.fillText(vStr, mL-7, py+4);
+
+    /* 그래프 위 점 */
+    CTX.fillStyle=col;
+    CTX.beginPath(); CTX.arc(nx,py,5.5,0,PI*2); CTX.fill();
+    CTX.fillStyle='#fff';
+    CTX.beginPath(); CTX.arc(nx,py,2.2,0,PI*2); CTX.fill();
+  });
+
+  /* ── θ x레이블 ── */
+  const sp2 = snap(theta);
+  const xlbl = sp2 ? sp2.lbl : theta.toFixed(2);
+  CTX.font='bold 12px Malgun Gothic,sans-serif';
+  const xlw = CTX.measureText(xlbl).width;
+  if(nx>=mL && nx<=W-mR){
+    CTX.globalAlpha=0.94; CTX.fillStyle=C.bg;
+    CTX.fillRect(nx-xlw/2-4, H-mB+1, xlw+8, 15);
+    CTX.globalAlpha=1;
+    CTX.fillStyle=C.amber; CTX.textAlign='center';
+    CTX.fillText(xlbl, nx, H-mB+13);
+  }
+
+  /* ── 하단 정보 카드 업데이트 ── */
+  updateCards();
+}
+
+/* ── 곡선 그리기 (tStart~tEnd) ── */
+function drawCurves(fs, tStart, tEnd, L){
+  if(tEnd <= tStart) return;
+  const {sx,sy} = L;
+  const steps = Math.round(Math.abs(tEnd-tStart)/PI*320) + 100;
+  fs.forEach(fn=>{
+    CTX.strokeStyle = FC[fn]; CTX.lineWidth = 2.5;
+    CTX.beginPath();
+    let pen=false, pv=null;
+    for(let i=0;i<=steps;i++){
+      const t  = tStart + (i/steps)*(tEnd-tStart);
+      let v;
+      if(fn==='sin')      v = Math.sin(t);
+      else if(fn==='cos') v = Math.cos(t);
+      else {
+        v = Math.tan(t);
+        if(!isFinite(v)||Math.abs(v)>3.15||(pv!==null&&Math.abs(v-pv)>7)){
+          pen=false; pv=null; continue;
+        }
+      }
+      pv=v;
+      const px2=sx(t), py2=sy(v);
+      if(!pen){ CTX.moveTo(px2,py2); pen=true; } else CTX.lineTo(px2,py2);
+    }
+    CTX.stroke();
+  });
+}
+
+/* ── 단위원 그리기 ── */
+function drawCircle(L){
+  const {mT,mB,unitPx,R,midY,x0,cx,cy,sx,sy} = L;
+  const cosT=Math.cos(theta), sinT=Math.sin(theta);
+  const px=cx+R*cosT, py=cy-R*sinT;
+
+  /* 단위원 배경 (음수 그래프가 비치도록 반투명) */
+  CTX.globalAlpha=0.60; CTX.fillStyle=C.bg2;
+  CTX.beginPath(); CTX.arc(cx,cy,R+2,0,PI*2); CTX.fill();
+  CTX.globalAlpha=1;
+
+  /* 보조 축 */
+  CTX.strokeStyle='rgba(0,0,0,0.10)'; CTX.lineWidth=0.5;
+  CTX.beginPath(); CTX.moveTo(cx-R-8,cy); CTX.lineTo(cx+R+8,cy); CTX.stroke();
+  CTX.beginPath(); CTX.moveTo(cx,cy-R-8); CTX.lineTo(cx,cy+R+8); CTX.stroke();
+
+  /* 단위원 */
+  CTX.strokeStyle='#888'; CTX.lineWidth=1.8;
+  CTX.beginPath(); CTX.arc(cx,cy,R,0,PI*2); CTX.stroke();
+
+  /* 30도 간격 특수각 점 + 레이블 */
+  SPEC.forEach(s=>{
+    if(s.t<-0.01||s.t>2*PI+0.01) return;
+    const qx=cx+R*Math.cos(s.t), qy=cy-R*Math.sin(s.t);
+    CTX.fillStyle='rgba(0,0,0,0.18)';
+    CTX.beginPath(); CTX.arc(qx,qy,2.8,0,PI*2); CTX.fill();
+    const lr=R+17, lx=cx+lr*Math.cos(s.t), ly=cy-lr*Math.sin(s.t);
+    CTX.font='10px Malgun Gothic,sans-serif';
+    CTX.fillStyle='rgba(0,0,0,0.30)';
+    const ax=Math.cos(s.t), ay=-Math.sin(s.t);
+    CTX.textAlign=ax>0.15?'left':ax<-0.15?'right':'center';
+    CTX.fillText(s.lbl, lx+(ax>0.15?2:ax<-0.15?-2:0), ly+(ay<-0.15?-2:ay>0.15?9:4));
+  });
+
+  /* 각도 호 */
+  CTX.strokeStyle=C.amber; CTX.lineWidth=2;
+  CTX.beginPath();
+  if(theta>=0) CTX.arc(cx,cy,26,0,-theta,true);
+  else         CTX.arc(cx,cy,26,0,-theta,false);
+  CTX.stroke();
+  CTX.fillStyle=C.amber; CTX.font='14px serif'; CTX.textAlign='center';
+  CTX.fillText('θ', cx+40*Math.cos(-theta/2), cy+40*Math.sin(-theta/2));
+
+  /* sin 투영선 */
+  const fs=funcs();
+  if(fs.includes('sin')){
+    CTX.setLineDash([5,4]); CTX.strokeStyle=C.sin; CTX.lineWidth=1.8;
+    CTX.beginPath(); CTX.moveTo(px,cy); CTX.lineTo(px,py); CTX.stroke();
+    CTX.setLineDash([]);
+  }
+  /* cos 투영선 */
+  if(fs.includes('cos')){
+    CTX.setLineDash([5,4]); CTX.strokeStyle=C.cos; CTX.lineWidth=1.8;
+    CTX.beginPath(); CTX.moveTo(cx,py); CTX.lineTo(px,py); CTX.stroke();
+    CTX.setLineDash([]);
+  }
+  /* tan 선 */
+  if(fs.includes('tan')){
+    const tv=Math.tan(theta);
+    if(isFinite(tv)&&Math.abs(tv)<3.5){
+      const ty=cy-R*tv;
+      CTX.setLineDash([4,5]); CTX.strokeStyle=C.tan; CTX.lineWidth=1.6;
+      CTX.beginPath(); CTX.moveTo(cx+R,cy); CTX.lineTo(cx+R,ty); CTX.stroke();
+      CTX.setLineDash([]);
+      CTX.strokeStyle=C.tan; CTX.lineWidth=0.9; CTX.globalAlpha=0.30;
+      CTX.beginPath(); CTX.moveTo(cx,cy); CTX.lineTo(cx+R,ty); CTX.stroke();
+      CTX.globalAlpha=1;
+    }
+  }
+
+  /* 반지름선 */
+  CTX.strokeStyle=C.text; CTX.lineWidth=2.2;
+  CTX.beginPath(); CTX.moveTo(cx,cy); CTX.lineTo(px,py); CTX.stroke();
+
+  /* ── 좌표 표시 ──
+     특수각이면 강조 말풍선, 아니면 소수 좌표 */
+  const sp = snap(theta);
+  if(sp){
+    /* 강조 링 */
+    CTX.strokeStyle=C.amber; CTX.lineWidth=2;
+    CTX.beginPath(); CTX.arc(px,py,7,0,PI*2); CTX.stroke();
+
+    /* 투영 강조선 */
+    CTX.setLineDash([3,3]);
+    CTX.strokeStyle=C.cos; CTX.lineWidth=1.2; CTX.globalAlpha=0.7;
+    CTX.beginPath(); CTX.moveTo(px,cy); CTX.lineTo(px,py); CTX.stroke();
+    CTX.strokeStyle=C.sin;
+    CTX.beginPath(); CTX.moveTo(cx,py); CTX.lineTo(px,py); CTX.stroke();
+    CTX.setLineDash([]); CTX.globalAlpha=1;
+
+    /* 라디안 레이블 */
+    CTX.font='bold 11px Malgun Gothic,sans-serif';
+    CTX.fillStyle=C.amber; CTX.textAlign='center';
+    const labelY = sinT>=0 ? py-20 : py+28;
+    CTX.fillText(sp.lbl, px, labelY);
+
+    /* 좌표 말풍선 */
+    const cosStr = nice(cosT);
+    const sinStr = nice(sinT);
+    CTX.font='bold 12px Malgun Gothic,sans-serif';
+    const tw = CTX.measureText('('+cosStr+', '+sinStr+')').width;
+    let bx = cosT>=0 ? px+10 : px-10-tw;
+    let bby = sinT>=0 ? py-14 : py+22;
+    /* 화면 밖으로 나가지 않게 보정 */
+    if(bx < 4) bx = 4;
+    if(bx+tw+10 > W) bx = W-tw-14;
+    if(bby-14 < 2) bby = 16;
+    if(bby > H-4) bby = H-4;
+    coordBubble(cosStr, sinStr, bx, bby);
+  } else {
+    /* 일반 소수 좌표 */
+    const cosStr = cosT.toFixed(2);
+    const sinStr = sinT.toFixed(2);
+    const coord  = '('+cosStr+', '+sinStr+')';
+    CTX.font='12px Malgun Gothic,sans-serif';
+    const tw = CTX.measureText(coord).width;
+    let bx = cosT>=0 ? px+10 : px-10-tw;
+    let bby = sinT>=0 ? py-12 : py+20;
+    if(bx < 4) bx = 4;
+    if(bx+tw+8 > W) bx = W-tw-10;
+    if(bby-14 < 2) bby = 16;
+    if(bby > H-4) bby = H-4;
+    /* 배경 */
+    CTX.globalAlpha=0.90; CTX.fillStyle=C.bg;
+    CTX.fillRect(bx-3, bby-13, tw+6, 16);
+    CTX.globalAlpha=1;
+    CTX.fillStyle=C.text2; CTX.textAlign='left';
+    CTX.fillText(coord, bx, bby);
+  }
+
+  /* P 점 */
+  CTX.fillStyle=C.sin;
+  CTX.beginPath(); CTX.arc(px,py,7,0,PI*2); CTX.fill();
+  CTX.fillStyle='#fff';
+  CTX.beginPath(); CTX.arc(px,py,3,0,PI*2); CTX.fill();
+
+  /* 원점 */
+  CTX.fillStyle=C.text;
+  CTX.beginPath(); CTX.arc(cx,cy,3,0,PI*2); CTX.fill();
+}
+
+/* ════════════════════════════════════════
+   카드 업데이트
+════════════════════════════════════════ */
+function updateCards(){
+  const s=Math.sin(theta), c=Math.cos(theta), t=Math.tan(theta);
+  const sp=snap(theta);
+  document.getElementById('sv').textContent  = sp ? nice(s) : s.toFixed(3);
+  document.getElementById('cv2').textContent = sp ? nice(c) : c.toFixed(3);
+  document.getElementById('tv').textContent  =
+    (!isFinite(t)||Math.abs(t)>999) ? '정의 불가' : sp ? nice(t) : t.toFixed(3);
+  document.getElementById('pv').textContent  = (s*s+c*c).toFixed(4);
+  const deg=(theta*180/PI).toFixed(1);
+  document.getElementById('adsp').textContent = sp
+    ? sp.lbl+' ('+deg+'°)'
+    : theta.toFixed(3)+' rad ('+deg+'°)';
+}
+
+/* ════════════════════════════════════════
+   슬라이더 / 재생 / 속도
+════════════════════════════════════════ */
+function tFromSl(v){ return T_MIN + (v/2000)*SPAN; }
+function slFromT(t){ return Math.round(((t-T_MIN)/SPAN)*2000); }
+function onSl(v){ theta=tFromSl(parseInt(v)); redraw(); }
+
+function togglePlay(){
+  playing=!playing;
+  document.getElementById('pb').textContent=playing?'⏸ 일시정지':'▶ 재생';
+  if(playing){ t0=null; raf=requestAnimationFrame(anim); }
+  else cancelAnimationFrame(raf);
+}
+function anim(now){
+  if(!t0) t0=now;
+  theta += (now-t0)/1000*spd; t0=now;
+  if(theta>T_MAX) theta=T_MIN;
+  document.getElementById('sl').value=slFromT(theta);
+  redraw();
+  if(playing) raf=requestAnimationFrame(anim);
+}
+function setSp(s,btn){
+  spd=s;
+  document.querySelectorAll('.sp').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+}
+function setF(btn){
+  func=btn.dataset.f;
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  redraw();
+}
+
+/* ════════════════════════════════════════
+   터치: 캔버스 직접 드래그로 θ 변경
+════════════════════════════════════════ */
+let drag=false;
+CV.addEventListener('touchstart', e=>{ drag=true; doTouch(e); }, {passive:true});
+CV.addEventListener('touchmove',  e=>{ if(drag) doTouch(e); }, {passive:true});
+CV.addEventListener('touchend',   ()=>drag=false);
+function doTouch(e){
+  const rect=CV.getBoundingClientRect();
+  const L=lay();
+  const tx=e.touches[0].clientX-rect.left;
+  const nt=(tx-L.x0)/L.pxR;
+  if(nt>=T_MIN&&nt<=T_MAX){
+    theta=nt;
+    document.getElementById('sl').value=slFromT(theta);
+    redraw();
+  }
+}
+
+/* ════════════════════════════════════════
+   초기 렌더
+════════════════════════════════════════ */
+redraw();
+
+/* ════════════════════════════════════════
+   정리표 생성
+════════════════════════════════════════ */
+(function(){
+  const rows=[
+    [-180,'-π'],[-90,'-π/2'],[-60,'-π/3'],[-45,'-π/4'],[-30,'-π/6'],
+    [0,'0'],[30,'π/6'],[45,'π/4'],[60,'π/3'],[90,'π/2'],
+    [120,'2π/3'],[135,'3π/4'],[150,'5π/6'],[180,'π'],
+    [210,'7π/6'],[225,'5π/4'],[240,'4π/3'],[270,'3π/2'],
+    [300,'5π/3'],[315,'7π/4'],[330,'11π/6'],[360,'2π'],[450,'5π/2']
+  ];
+  const tb=document.getElementById('tb');
+  rows.forEach(([deg,rad])=>{
+    const r=deg*PI/180;
+    const sv=nice(Math.sin(r)), cv3=nice(Math.cos(r));
+    const tv=Math.tan(r);
+    const ts2=(!isFinite(tv)||Math.abs(tv)>1e6)
+      ? '<span class="nd">정의 불가</span>'
+      : '<span class="vt">'+nice(tv)+'</span>';
+    tb.innerHTML+=`<tr>
+      <td>${deg}°</td><td class="r">${rad}</td>
+      <td class="vs">${sv}</td><td class="vc">${cv3}</td><td>${ts2}</td>
+    </tr>`;
+  });
+})();
+</script>
+</body>
+</html>
