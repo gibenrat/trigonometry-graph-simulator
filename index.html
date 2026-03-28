@@ -211,25 +211,49 @@ function funcs(){ return func==='all'?['sin','cos','tan']:func==='sincos'?['sin'
 const FC = {sin:C.sin, cos:C.cos, tan:C.tan};
 
 /* ════════════════════════════════════════
-   특수각 (π/6 간격, 라디안 표기)
+   특수각: π/6(30도) + π/4(45도) 간격
 ════════════════════════════════════════ */
 const SPEC = [];
-const SLBL = {0:'0',1:'π/6',2:'π/3',3:'π/2',4:'2π/3',5:'5π/6',6:'π',
-              7:'7π/6',8:'4π/3',9:'3π/2',10:'5π/3',11:'11π/6',12:'2π',
-              13:'13π/6',14:'7π/3',15:'5π/2'};
+
+/* π/6 간격 (30도) */
+const SLBL6 = {0:'0',1:'π/6',2:'π/3',3:'π/2',4:'2π/3',5:'5π/6',6:'π',
+               7:'7π/6',8:'4π/3',9:'3π/2',10:'5π/3',11:'11π/6',12:'2π',
+               13:'13π/6',14:'7π/3',15:'5π/2'};
 for(let k=-2;k<=15;k++){
   const t=k*PI/6;
-  if(t<T_MIN-0.01||t>T_MAX+0.01)continue;
+  if(t<T_MIN-0.01||t>T_MAX+0.01) continue;
   const ak=Math.abs(k);
-  const lbl = k===0?'0':(k<0?'-':'')+SLBL[ak];
-  if(lbl) SPEC.push({t,lbl,k});
+  const lbl=k===0?'0':(k<0?'-':'')+SLBL6[ak];
+  if(lbl) SPEC.push({t,lbl,k,type:'6'});
 }
 
-/* 주어진 θ에서 가장 가까운 특수각 반환 (임계값 내) */
+/* π/4 간격 (45도) - π/6과 겹치지 않는 것만 */
+const SLBL4 = {1:'π/4',2:'π/2',3:'3π/4',4:'π',5:'5π/4',6:'3π/2',7:'7π/4',8:'2π',9:'9π/4',10:'5π/2'};
+for(let k=-2;k<=10;k++){
+  const t=k*PI/4;
+  if(t<T_MIN-0.01||t>T_MAX+0.01) continue;
+  /* π/6과 겹치는지 확인 (π/2, π, 3π/2, 2π는 이미 있음) */
+  const already=SPEC.some(s=>Math.abs(s.t-t)<0.001);
+  if(already) continue;
+  const ak=Math.abs(k);
+  const lbl=k===0?'0':(k<0?'-π/4':'')+( k<0 ? (ak===1?'π/4':ak===2?'π/2':ak===3?'3π/4':'') : SLBL4[ak]||'');
+  /* 음수 π/4 레이블 직접 처리 */
+  let finalLbl='';
+  if(k===0) finalLbl='0';
+  else if(k===-1) finalLbl='-π/4';
+  else if(k===-2) finalLbl='-π/2';
+  else finalLbl=SLBL4[ak]||'';
+  if(finalLbl) SPEC.push({t,lbl:finalLbl,k,type:'4'});
+}
+
+/* t값 순서로 정렬 */
+SPEC.sort((a,b)=>a.t-b.t);
+
+/* 가장 가까운 특수각 반환 */
 function snap(t){
   let best=null, bd=Infinity;
   for(const s of SPEC){ const d=Math.abs(s.t-t); if(d<bd){bd=d;best=s;} }
-  return bd < 0.06 ? best : null;
+  return bd < 0.10 ? best : null;
 }
 
 /* 깔끔한 분수 표현 */
@@ -375,7 +399,7 @@ function redraw(){
   const XTICKS=[[-1,'-π'],[-1/2,'-π/2'],[0,'0'],[1/2,'π/2'],[1,'π'],[3/2,'3π/2'],[2,'2π'],[5/2,'5π/2']];
   CTX.fillStyle=C.text2; CTX.font='12px Malgun Gothic,sans-serif'; CTX.textAlign='center';
   XTICKS.forEach(([k,lbl])=>{
-    const px=sx(k*PI); if(px<mL+2||px>W-mR+2) return;
+    const px=sx(k*PI); if(px<4||px>W-mR+2) return;
     CTX.fillText(lbl,px,H-mB+15);
     CTX.strokeStyle=C.text2; CTX.lineWidth=0.5;
     CTX.beginPath(); CTX.moveTo(px,midY-4); CTX.lineTo(px,midY+4); CTX.stroke();
@@ -438,8 +462,9 @@ function redraw(){
     CTX.strokeStyle=col; CTX.lineWidth=2;
     CTX.beginPath(); CTX.moveTo(mL-5,py); CTX.lineTo(mL+2,py); CTX.stroke();
 
-    /* y값 레이블 */
-    const vStr = sp ? nice(v) : v.toFixed(2);
+    /* y값 레이블 - sp.t 기준 정확한 값 */
+    const exactV = sp ? (fn==='sin'?Math.sin(sp.t):fn==='cos'?Math.cos(sp.t):Math.tan(sp.t)) : v;
+    const vStr = sp ? nice(exactV) : v.toFixed(2);
     CTX.font='bold 12px Malgun Gothic,sans-serif'; CTX.fillStyle=col; CTX.textAlign='right';
     CTX.fillText(vStr, mL-7, py+4);
 
@@ -448,6 +473,28 @@ function redraw(){
     CTX.beginPath(); CTX.arc(nx,py,5.5,0,PI*2); CTX.fill();
     CTX.fillStyle='#fff';
     CTX.beginPath(); CTX.arc(nx,py,2.2,0,PI*2); CTX.fill();
+
+    /* 특수각일 때 그래프 점 위에 (θ, 함수값) 말풍선 */
+    if(sp){
+      const xStr = sp.lbl;
+      const yStr = nice(exactV);
+      const lbl2 = '('+xStr+', '+yStr+')';
+      CTX.font='bold 11px Malgun Gothic,sans-serif';
+      const tw2 = CTX.measureText(lbl2).width;
+      let bx2 = nx + 8;
+      let by2 = py - 14;
+      if(bx2+tw2+8 > W-mR) bx2 = nx-tw2-12;
+      if(bx2 < 4) bx2 = 4;
+      if(by2-2 < mT) by2 = py+20;
+      if(by2 > H-mB-4) by2 = py-14;
+      CTX.globalAlpha=0.95; CTX.fillStyle=C.bg;
+      CTX.fillRect(bx2-3, by2-13, tw2+6, 16);
+      CTX.globalAlpha=1;
+      CTX.strokeStyle=col; CTX.lineWidth=0.8;
+      CTX.strokeRect(bx2-3, by2-13, tw2+6, 16);
+      CTX.fillStyle=col; CTX.textAlign='left';
+      CTX.fillText(lbl2, bx2, by2);
+    }
   });
 
   /* ── θ x레이블 ── */
@@ -569,8 +616,7 @@ function drawCircle(L){
   CTX.strokeStyle=C.text; CTX.lineWidth=2.2;
   CTX.beginPath(); CTX.moveTo(cx,cy); CTX.lineTo(px,py); CTX.stroke();
 
-  /* ── 좌표 표시 ──
-     특수각이면 강조 말풍선, 아니면 소수 좌표 */
+  /* ── 특수각 강조 ── */
   const sp = snap(theta);
   if(sp){
     /* 강조 링 */
@@ -590,39 +636,6 @@ function drawCircle(L){
     CTX.fillStyle=C.amber; CTX.textAlign='center';
     const labelY = sinT>=0 ? py-20 : py+28;
     CTX.fillText(sp.lbl, px, labelY);
-
-    /* 좌표 말풍선 */
-    const cosStr = nice(cosT);
-    const sinStr = nice(sinT);
-    CTX.font='bold 12px Malgun Gothic,sans-serif';
-    const tw = CTX.measureText('('+cosStr+', '+sinStr+')').width;
-    let bx = cosT>=0 ? px+10 : px-10-tw;
-    let bby = sinT>=0 ? py-14 : py+22;
-    /* 화면 밖으로 나가지 않게 보정 */
-    if(bx < 4) bx = 4;
-    if(bx+tw+10 > W) bx = W-tw-14;
-    if(bby-14 < 2) bby = 16;
-    if(bby > H-4) bby = H-4;
-    coordBubble(cosStr, sinStr, bx, bby);
-  } else {
-    /* 일반 소수 좌표 */
-    const cosStr = cosT.toFixed(2);
-    const sinStr = sinT.toFixed(2);
-    const coord  = '('+cosStr+', '+sinStr+')';
-    CTX.font='12px Malgun Gothic,sans-serif';
-    const tw = CTX.measureText(coord).width;
-    let bx = cosT>=0 ? px+10 : px-10-tw;
-    let bby = sinT>=0 ? py-12 : py+20;
-    if(bx < 4) bx = 4;
-    if(bx+tw+8 > W) bx = W-tw-10;
-    if(bby-14 < 2) bby = 16;
-    if(bby > H-4) bby = H-4;
-    /* 배경 */
-    CTX.globalAlpha=0.90; CTX.fillStyle=C.bg;
-    CTX.fillRect(bx-3, bby-13, tw+6, 16);
-    CTX.globalAlpha=1;
-    CTX.fillStyle=C.text2; CTX.textAlign='left';
-    CTX.fillText(coord, bx, bby);
   }
 
   /* P 점 */
@@ -642,10 +655,14 @@ function drawCircle(L){
 function updateCards(){
   const s=Math.sin(theta), c=Math.cos(theta), t=Math.tan(theta);
   const sp=snap(theta);
-  document.getElementById('sv').textContent  = sp ? nice(s) : s.toFixed(3);
-  document.getElementById('cv2').textContent = sp ? nice(c) : c.toFixed(3);
+  /* 특수각이면 sp.t 기준 정확한 값으로 표시 */
+  const ss = sp ? Math.sin(sp.t) : s;
+  const sc = sp ? Math.cos(sp.t) : c;
+  const st = sp ? Math.tan(sp.t) : t;
+  document.getElementById('sv').textContent  = sp ? nice(ss) : s.toFixed(3);
+  document.getElementById('cv2').textContent = sp ? nice(sc) : c.toFixed(3);
   document.getElementById('tv').textContent  =
-    (!isFinite(t)||Math.abs(t)>999) ? '정의 불가' : sp ? nice(t) : t.toFixed(3);
+    (!isFinite(st)||Math.abs(st)>999) ? '정의 불가' : sp ? nice(st) : t.toFixed(3);
   document.getElementById('pv').textContent  = (s*s+c*c).toFixed(4);
   const deg=(theta*180/PI).toFixed(1);
   document.getElementById('adsp').textContent = sp
